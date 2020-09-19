@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--이름 충돌을 방지한다.-->
+<mapper namespace="com.kubg.mapper.adminMapper">
+
+<!-- admin카테고리 호출 -->
+<select id="category" resultType="com.kubg.dto.CategoryDTO">
+ select
+  level, catename, catecode, catecoderef
+ from goods_category
+     start with catecoderef is null connect by prior catecode = catecoderef
+</select>
+
+<!-- 상품 등록 -->
+<insert id="register">
+ insert into tbl_goods (gdsnum, gdsname, catecode, gdsprice, gdsstock, gdsdes, gdsimg, gdsthumbimg)
+     values (tbl_goods_seq.nextval, #{gdsname}, #{catecode}, #{gdsprice}, #{gdsstock}, #{gdsdes}, #{gdsimg}, #{gdsthumbimg})
+</insert>
+
+<!-- 상품 목록 --> 
+<!-- <select id="goodslist" resultType="com.kubg.dto.GoodsDTO">
+select
+gdsnum, gdsname, catecode, gdsprice, gdsstock, gdsdes, gdsimg, gdsdate
+from tbl_goods
+order by gdsnum desc
+</select> -->
+
+<!-- 상품 목록 --> 
+<select id="goodsList" resultType="com.kubg.dto.GoodsViewDTO">
+select
+g.gdsnum, g.gdsname, g.catecode, c.catecoderef, c.catename, gdsprice, gdsstock, gdsdes, gdsimg, gdsdate, gdsimg, gdsthumbimg
+from tbl_goods g
+inner join goods_category c
+on g.catecode = c.catecode
+</select>
+
+<!-- 상품 조회 -->
+<!-- <select id="goodsView" resultType="com.kubg.dto.GoodsDTO">
+select gdsnum, gdsname, catecode, gdsprice, gdsstock, gdsdes, gdsimg, gdsdate
+from tbl_goods
+where gdsnum = #{gdsnum}
+</select> -->
+
+<!-- 상품 조회 + 카테고리 조인-->
+<select id="goodsView" resultType="com.kubg.dto.GoodsViewDTO">
+select
+g.gdsnum, g.gdsname, g.catecode, c.catecoderef, c.catename, gdsprice, gdsstock, gdsdes, gdsimg, gdsdate, gdsimg, gdsthumbimg
+from tbl_goods g
+inner join goods_category c
+on g.catecode = c.catecode
+where g.gdsnum = #{gdsnum}
+</select>
+
+<!-- 상품 조회 + 카테고리 조인-->
+<select id="goodsReview" resultType="com.kubg.dto.GoodsReviewDTO">
+select
+g.gdsnum, g.gdsname, g.catecode, c.catecoderef, c.catename, gdsprice, gdsstock, gdsdes, gdsimg, gdsdate, gdsimg, gdsthumbimg
+from tbl_goods g
+inner join goods_category c
+on g.catecode = c.catecode
+where g.gdsnum = #{gdsnum}
+</select>
+
+<!-- 상품 수정 -->
+<update id="goodsModify">
+update tbl_goods
+set
+gdsname = #{gdsname},
+catecode = #{catecode},
+gdsprice = #{gdsprice},
+gdsstock = #{gdsstock},
+gdsdes = #{gdsdes},
+
+gdsimg = #{gdsimg},
+gdsthumbimg = #{gdsthumbimg}
+
+where gdsnum = ${gdsnum}
+</update>
+
+<!-- 상품 삭제 -->
+<delete id="goodsDelete">
+ delete from
+     tbl_goods
+ where gdsnum = #{gdsnum}
+</delete>
+
+<!-- 모든 유저의 주문 목록 -->
+<select id="adminOrderList" resultType="com.kubg.dto.OrderDTO">
+ select
+     orderid, mem_id, orderrec,
+     useraddr1, useraddr2, useraddr3,
+     orderphon, amount, orderdate, delivery
+ from tbl_order
+</select>
+
+<!-- 특정 주문 목록 -->
+<select id="adminOrderView" resultType="com.kubg.dto.OrderListDTO">
+ select
+     o.orderid, o.mem_id, o.orderrec,
+     o.useraddr1, o.useraddr2, o.useraddr3,
+     o.orderphon, o.amount, o.orderdate, o.delivery,
+     d.orderdetailsnum, d.gdsnum, d.cartstock,
+     g.gdsname, g.gdsthumbimg, g.gdsprice
+ from tbl_order o
+         inner join tbl_order_details d
+             on o.orderid = d.orderid
+         inner join tbl_goods g
+             on d.gdsnum = g.gdsnum
+     where o.orderid = #{orderid}
+</select>
+<!-- 배송 상태 -->
+<update id="delivery">
+ update tbl_order
+     set delivery = #{delivery}
+ where orderid = #{orderid}
+</update>
+
+<!-- 상품 수량 조절 -->
+<update id="changeStock">
+ update tbl_goods
+     set gdsstock = gdsstock - #{gdsstock}
+ where gdsnum = #{gdsnum}
+</update>
+
+<!--  모든 소감(댓글) -->
+<select id="allReply" resultType="com.kubg.dto.ReplyListDTO">
+ select
+     r.gdsnum, r.mem_id, r.repnum, r.repcon, r.repdate,
+     m.username
+ from tbl_reply r
+      inner join tbl_member m
+         on r.mem_id = m.mem_id
+</select>
+
+<!-- 소감(댓글) 지우기 -->
+<delete id="adminDeleteReply">
+ delete tbl_reply
+     where repnum = #{repnum}
+</delete>
+</mapper>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--이름 충돌을 방지한다.-->
+<mapper namespace="com.kubg.mapper.shopMapper">
+
+
+<!-- 카테고리별 상품리스트 -->
+<!-- <select id="list" resultType="com.kubg.dto.GoodsViewDTO">
+select
+    g.gdsnum, g.gdsname, g.catecode, c.catecoderef, c.catename, gdsprice, gdsstock, gdsdes, gdsimg, gdsdate, g.gdsimg, g.gdsthumbimg
+        from tbl_goods g
+            inner join goods_category c
+                on g.catecode = c.catecode           
+            where g.catecode = #{catecode}
+</select> -->
+
+<!-- 카테고리별 상품리스트 / 1차 분류 -->
+<select id="list_1" resultType="com.kubg.dto.GoodsViewDTO">
+select
+    g.gdsnum, g.gdsname, g.catecode, c.catecoderef, c.catename, gdsprice, gdsstock, gdsdes, gdsimg, gdsdate, g.gdsimg, g.gdsthumbimg
+        from tbl_goods g
+            inner join goods_category c
+                on g.catecode = c.catecode           
+            where g.catecode = #{catecode}
+            or c.catecoderef = #{catecoderef}
+</select>
+
+<!-- 카테고리별 상품리스트 / 2차 분류 -->
+<select id="list_2" resultType="com.kubg.dto.GoodsViewDTO">
+select
+    g.gdsnum, g.gdsname, g.catecode, c.catecoderef, c.catename, gdsprice, gdsstock, gdsdes, gdsimg, gdsdate, g.gdsimg, g.gdsthumbimg
+        from tbl_goods g
+            inner join goods_category c
+                on g.catecode = c.catecode           
+            where g.catecode = #{catecode}
+</select>
+
+<!-- 상품 소감(댓글) 작성 -->
+<insert id="registReply">
+insert into tbl_reply (gdsnum, mem_id,repnum, repcon)
+	values (#{gdsnum}, #{mem_id}, tbl_reply_seq.nextval, #{repcon})
+</insert>
+<!-- 상품 소감(댓글) 리스트 -->
+<select id="replyList" resultType="com.kubg.dto.ReplyListDTO">
+select
+r.gdsnum, r.mem_id, r.repnum, r.repcon, r.repdate, m.username
+from tbl_reply r
+inner join tbl_member m
+on r.mem_id = m.mem_id
+where gdsnum = #{gdsnum}
+</select>
+
+<!-- 상품소감(댓글) 삭제 -->
+<delete id="deleteReply">
+delete tbl_reply
+where repnum = #{repnum}
+and mem_id = #{mem_id}
+</delete>
+
+<!-- 아이디 체크 -->
+<select id="replyMem_idCheck" resultType="String">
+select mem_id
+from tbl_reply
+where repnum = #{repnum}
+</select>
+
+<!-- 상품소감수정 -->
+<update id="modifyReply">
+update tbl_reply
+set
+repcon = #{repcon}
+where repnum = #{repnum}
+and mem_id = #{mem_id}
+</update>
+<!-- 카트 담기 -->
+<insert id="addCart">
+insert into tbl_cart (cartnum, mem_id, gdsnum, cartstock)
+values (tbl_cart_seq.nextval, #{mem_id}, #{gdsnum}, #{cartstock})
+</insert>
+<!-- 카트 리스트 -->
+<select id="cartList" resultType="com.kubg.dto.CartListDTO">
+ select
+     row_number() over(order by c.cartnum desc) as cartlistnum,
+     c.cartnum, c.mem_id, c.gdsnum, c.cartstock, c.adddate,
+     g.gdsname, g.gdsprice, g.gdsthumbimg
+ from tbl_cart c
+     inner join tbl_goods g
+         on c.gdsnum = g.gdsnum   
+     where c.mem_id = #{mem_id}
+</select>
+<!-- 카트 삭제 -->
+<delete id="deleteCart">
+delete tbl_cart
+where cartnum = #{cartnum}
+and mem_id = #{mem_id}
+</delete>
+<!-- 주문 정보 -->
+<insert id="orderInfo">
+ insert into tbl_order(orderid, mem_id, orderrec, useraddr1, useraddr2, useraddr3, orderphon, amount)
+     values(#{orderid}, #{mem_id}, #{orderrec}, #{useraddr1}, #{useraddr2}, #{useraddr3}, #{orderphon}, #{amount})
+</insert>
+   
+<!-- 주문 상세 정보 --> 
+<insert id="orderInfo_Details">
+ insert into tbl_order_details(orderdetailsnum, orderid, gdsnum, cartstock)
+     select tbl_order_details_seq.nextval, #{orderid}, gdsnum, cartstock
+         from tbl_cart   
+</insert>
+<!-- 카트 비우기 --> 
+<delete id="cartAllDelete">
+delete tbl_cart
+where mem_id = #{mem_id}
+</delete>
+<!-- 특정 유저의 주문목록 -->
+<select id="orderList" resultType="com.kubg.dto.OrderDTO">
+ select
+     orderid, mem_id, orderrec,
+     useraddr1, useraddr2, useraddr3,
+     orderphon, amount, orderdate, delivery
+ from tbl_order 
+     where mem_id = #{mem_id}
+</select>
+<!-- 특정 주문 목록 -->
+<select id="orderView" resultType="com.kubg.dto.OrderListDTO">
+ select
+     o.orderid, o.mem_id, o.orderrec,
+     o.useraddr1, o.useraddr2, o.useraddr3,
+     o.orderphon, o.amount, o.orderDate, o.delivery,
+     d.orderdetailsnum, d.gdsnum, d.cartstock,
+     g.gdsname, g.gdsthumbimg, g.gdsprice
+ from tbl_order o
+         inner join tbl_order_details d
+             on o.orderid = d.orderid
+         inner join tbl_goods g
+             on d.gdsnum = g.gdsnum
+     where o.mem_id = #{mem_id}
+         and o.orderid = #{orderid}
+</select>
+
+
+</mapper>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--이름 충돌을 방지한다.-->
+<mapper namespace="com.kubg.mapper.memberMapper">
+
+<!-- 회원 가입 -->
+<insert id="signup">
+ insert into tbl_member(mem_id, userPass, username, userphon)
+  values(#{mem_id}, #{userpass}, #{username}, #{userphon}) 
+</insert>
+
+<!-- 로그인 -->
+<select id="signin" resultType="com.kubg.dto.MemberDTO">
+select
+mem_id, username, userpass, userphon, useraddr1, useraddr2, useraddr3, regidate, verify
+from
+tbl_member
+where mem_id = #{mem_id}
+</select>
+
+</mapper>
